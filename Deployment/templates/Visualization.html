@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Drug-Target Interaction Visualization</title>
+    <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            font-family: 'Arimo', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 95%;
+            max-width: 1000px;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        .container h1 {
+            font-family: 'Pacifico', cursive;
+            text-align: center;
+            color: black;
+            font-size: 36px;
+        }
+
+        .container h2 {
+            font-family: 'Arimo', sans-serif;
+            color: black;
+            font-size: 28px;
+            margin-top: 30px;
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            margin-top: 20px;
+            overflow: hidden;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .image-container img.active {
+            display: block;
+        }
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 100;
+        }
+
+        .nav-button.prev {
+            left: 10px;
+        }
+
+        .nav-button.next {
+            right: 10px;
+        }
+
+        .nav-button:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+        }
+
+        .modal-content {
+            width: auto;
+            max-width: 90%;
+            max-height: 90%;
+            margin: auto;
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+        }
+        .btn-large-half {
+            padding: 1rem 3rem; /* Increase the padding to make the button larger */
+            font-size: 1.25rem;    /* Increase the font size */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Drug-Target Interaction Visualization</h1>
+        
+        <h2>Drugs</h2>
+        <div class="image-container">
+            {% for img in drugs_images %}
+                <img src="{{ url_for('serve_image', folder='drugs', filename=img) }}" alt="Drug Image">
+            {% endfor %}
+            <button class="nav-button prev">&laquo; Prev</button>
+            <button class="nav-button next">Next &raquo;</button>
+        </div>
+
+        <h2>Target</h2>
+        <div class="image-container">
+            {% for img in target_images %}
+                <img src="{{ url_for('serve_image', folder='target', filename=img) }}" alt="Target Image">
+            {% endfor %}
+            <button class="nav-button prev">&laquo; Prev</button>
+            <button class="nav-button next">Next &raquo;</button>
+        </div>
+
+        <h2>Pairs</h2>
+        <div class="image-container">
+            {% for img in pairs_images %}
+                <img src="{{ url_for('serve_image', folder='pairs', filename=img) }}" alt="Pairs Image">
+            {% endfor %}
+            <button class="nav-button prev">&laquo; Prev</button>
+            <button class="nav-button next">Next &raquo;</button>
+        </div>
+
+        <a href="{{ url_for('home') }}" class="btn btn-primary btn-large-half btn-block">Back to Prediction</a>
+
+    </div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="img01">
+    </div>
+
+    <script>
+        document.querySelectorAll('.image-container').forEach(function(container) {
+            var images = container.querySelectorAll('img');
+            var currentIndex = 0;
+
+            function showImage(index) {
+                images.forEach(function(img, i) {
+                    img.classList.toggle('active', i === index);
+                });
+            }
+
+            showImage(currentIndex);
+
+            var prevButton = container.querySelector('.nav-button.prev');
+            var nextButton = container.querySelector('.nav-button.next');
+
+            prevButton.addEventListener('click', function() {
+                currentIndex = (currentIndex - 1 + images.length) % images.length;
+                showImage(currentIndex);
+            });
+
+            nextButton.addEventListener('click', function() {
+                currentIndex = (currentIndex + 1) % images.length;
+                showImage(currentIndex);
+            });
+
+            images.forEach(function(img) {
+                img.onclick = function() {
+                    var modal = document.getElementById("myModal");
+                    var modalImg = document.getElementById("img01");
+                    modal.style.display = "flex";
+                    modalImg.src = this.src;
+                }
+            });
+        });
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() { 
+            document.getElementById("myModal").style.display = "none";
+        }
+
+        // Close modal on outside click 
+        window.onclick = function(event) {
+            if (event.target == document.getElementById("myModal")) {
+                document.getElementById("myModal").style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

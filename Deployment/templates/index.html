@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Drug-Target Interaction Prediction</title>
+  <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      font-family: 'Arimo', sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 95%;
+      max-width: 1000px;
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+
+    .container h1 {
+      font-family: 'Pacifico', cursive;
+      text-align: center;
+      color: black;
+      font-size: 36px; /* Increased font size */
+    }
+
+    .container form {
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-gap: 20px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .container input,
+    .container select,
+    .container button {
+      width: 100%;
+      padding: 15px; /* Increased padding */
+      font-size: 20px; /* Increased font size */
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .container button {
+      background-color: #5cb85c;
+      color: white;
+      cursor: pointer;
+    }
+
+    .container button:hover {
+      background-color: #4cae4c;
+    }
+
+    .container textarea {
+      resize: vertical;
+      height: 150px; /* Increased height */
+    }
+
+    .animation {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .animation div {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: red;
+      animation: move 5s linear infinite;
+    }
+
+    @keyframes move {
+      0% {
+        transform: translate(0, 0);
+        background-color: red;
+      }
+      25% {
+        transform: translate(80vw, 0);
+        background-color: yellow;
+      }
+      50% {
+        transform: translate(80vw, 80vh);
+        background-color: green;
+      }
+      75% {
+        transform: translate(0, 80vh);
+        background-color: blue;
+      }
+      100% {
+        transform: translate(0, 0);
+        background-color: red;
+      }
+    }
+
+    .animation div:nth-child(2) {
+      animation-delay: 2.5s;
+    }
+
+    #organism-text, #prediction-text, #num-atoms-text {
+      color: black;
+      font-weight: bold;
+      font-size: 24px; /* Increased font size */
+    }
+
+    #drug-img {
+        max-width: 100%;
+        margin-top: 20px;
+    }
+
+    .btn-large-half {
+      padding: 1rem 3rem; /* Increase the padding to make the button larger */
+      font-size: 1.25rem;    /* Increase the font size */
+  }
+  
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Drug-Target Interaction Prediction</h1>
+
+    <form action="{{ url_for('predict') }}" method="post">
+      <select id="drug" name="drug_name" required="required"></select>
+      <select id="target" name="target_name" required="required"></select>
+      <button type="submit" class="btn btn-primary btn-block btn-large">Predict</button>
+      
+    </form>
+
+    <div id="organism-text">Source: {{ organism }}</div>
+    <div id="prediction-text">{{ prediction_text }}</div>
+    <div id="num-atoms-text">Number of Atoms: {{ num_atoms }}</div>
+    {% if drug_img %}
+    <img id="drug-img" src="{{ url_for('static', filename='images/' + drug_img) }}" alt="Drug Molecule">
+    {% endif %}
+    <a href="{{ url_for('visualization') }}" class="btn btn-primary btn-large-half btn-block">Visualization</a>
+
+    
+    
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const drugs = {{ drugs|tojson }};
+      const targets = {{ targets|tojson }};
+
+      populateDropdown('drug', drugs);
+      populateDropdown('target', targets);
+
+      document.getElementById('drug').addEventListener('change', function() {
+        updateOrganismText('drug', drugs);
+      });
+
+      document.getElementById('target').addEventListener('change', function() {
+        updateOrganismText('target', targets);
+      });
+    });
+
+    function populateDropdown(dropdownId, options) {
+      const dropdown = document.getElementById(dropdownId);
+      dropdown.innerHTML = ''; // Clear current options
+      options.forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option.name;
+        opt.textContent = option.name;
+        dropdown.appendChild(opt);
+      });
+    }
+
+    function updateOrganismText(dropdownId, options) {
+      const selectedName = document.getElementById(dropdownId).value;
+      const selectedOption = options.find(option => option.name === selectedName);
+      if (selectedOption) {
+        document.getElementById('organism-text').textContent = `Organism: ${selectedOption.organism}`;
+      }
+    }
+  </script>
+</body>
+</html>
